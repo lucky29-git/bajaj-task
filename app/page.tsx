@@ -15,7 +15,7 @@ interface ApiResponse {
   numbers: string[];
   alphabets: string[];
   highest_lowercase_alphabet: string[];
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export default function Home() {
@@ -56,7 +56,7 @@ export default function Home() {
   const getFilteredResponse = () => {
     if (!apiResponse) return null;
 
-    let result: { [key: string]: any } = {};
+    const result: { [key: string]: unknown } = {};
 
     selectedFilters.forEach(filter => {
       switch (filter) {
