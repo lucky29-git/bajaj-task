@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 
-interface RequestBody {
-    data: string[];
-    file_b64: string;
-}
+// interface RequestBody {
+//     data: string[];
+//     file_b64: string;
+// }
 
 interface FileInfo {
     valid: boolean;
@@ -25,10 +25,10 @@ interface ApiResponse {
     file_size_kb: string;
 }
 
-interface ErrorResponse {
-    msg: string;
-    error?: string;
-}
+// interface ErrorResponse {
+//     msg: string;
+//     error?: string;
+// }
 
 function isPrime(num: number): boolean {
     if (num <= 1) return false;
