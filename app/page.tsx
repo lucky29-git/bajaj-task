@@ -1,101 +1,146 @@
-import Image from "next/image";
+"use client"
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState } from "react";
+
+
+interface ApiResponse {
+  is_success: boolean;
+  user_id: string;
+  email: string;
+  roll_number: string;
+  numbers: string[];
+  alphabets: string[];
+  highest_lowercase_alphabet: string[];
+  [key: string]: any;
+}
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const [jsonInput, setJsonInput] = useState<string>("");
+  const [error, setError] = useState<string>("");
+  const [apiResponse, setApiResponse] = useState<ApiResponse | null>(null);
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const validateAndSubmit = async () => {
+    try {
+      const parsedJson = JSON.parse(jsonInput);
+      
+      if (!parsedJson.data || !Array.isArray(parsedJson.data)) {
+        throw new Error('Input must contain a "data" array');
+      }
+
+      const response = await fetch('/api/bfhl', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonInput,
+      });
+
+      if (!response.ok) {
+        throw new Error('API request failed');
+      }
+
+      const data = await response.json();
+      setApiResponse(data.response);
+      setError("");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Invalid JSON format');
+      setApiResponse(null);
+    }
+  };
+
+  const getFilteredResponse = () => {
+    if (!apiResponse) return null;
+
+    let result: { [key: string]: any } = {};
+
+    selectedFilters.forEach(filter => {
+      switch (filter) {
+        case 'numbers':
+          result.numbers = apiResponse.numbers;
+          break;
+        case 'alphabets':
+          result.alphabets = apiResponse.alphabets;
+          break;
+        case 'highest_lowercase':
+          result.highest_lowercase_alphabet = apiResponse.highest_lowercase_alphabet;
+          break;
+      }
+    });
+
+    return result;
+  };
+
+  const renderResponse = () => {
+    const filteredResponse = getFilteredResponse();
+    if (!filteredResponse) return null;
+
+    return Object.entries(filteredResponse).map(([key, value]) => (
+      <div key={key} className="mb-4">
+        <Label className="font-bold capitalize">{key.replace(/_/g, ' ')}:</Label>
+        <div className="mt-1">{Array.isArray(value) ? value.join(', ') : value}</div>
+      </div>
+    ));
+  };
+
+  return (
+    <div className="container mx-auto px-4 py-8 max-w-2xl">
+      <div className="space-y-6">
+        <div className="space-y-4">
+          <Label htmlFor="jsonInput">API Input</Label>
+          <Input
+            id="jsonInput"
+            placeholder='{ "data": ["A","C","z"] }'
+            value={jsonInput}
+            onChange={(e) => setJsonInput(e.target.value)}
+          />
+          <Button onClick={validateAndSubmit} className="w-full">
+            Submit
+          </Button>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        {apiResponse && (
+          <div className="space-y-4">
+            <Label>Multi Filter</Label>
+            <Select
+              onValueChange={(value) => {
+                if (selectedFilters.includes(value)) {
+                  setSelectedFilters(selectedFilters.filter(f => f !== value));
+                } else {
+                  setSelectedFilters([...selectedFilters, value]);
+                }
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select filters" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="numbers">Numbers</SelectItem>
+                <SelectItem value="alphabets">Alphabets</SelectItem>
+                <SelectItem value="highest_lowercase">Highest Lowercase Alphabet</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
+
+        {selectedFilters.length > 0 && (
+          <div className="mt-6 p-4 border rounded-lg">
+            <h2 className="text-lg font-bold mb-4">Filtered Response</h2>
+            {renderResponse()}
+          </div>
+        )}
+      </div>
     </div>
   );
+  // );
 }
